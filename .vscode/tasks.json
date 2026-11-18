@@ -1,0 +1,86 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Workvine: Setup database (migrate + seed)",
+      "type": "shell",
+      "command": "npm run setup > .vscode\\setup.log 2>&1 & type .vscode\\setup.log",
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "clear": true
+      }
+    },
+    {
+      "label": "Workvine: Check database connection",
+      "type": "shell",
+      "command": "npx prisma migrate status > .vscode\\db-status.log 2>&1 & type .vscode\\db-status.log",
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "clear": true
+      }
+    },
+    {
+      "label": "Workvine: Dev server",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "nextjs",
+        "pattern": {
+          "regexp": "^__never__$"
+        },
+        "background": {
+          "activesBegin": "Next\\.js",
+          "beginsPattern": "Next\\.js",
+          "endsPattern": "Ready in"
+        }
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Workvine: Push to GitHub (SEN-LeVi/Saas-Cloud)",
+      "type": "shell",
+      "command": "(git --version && (git rev-parse --git-dir >nul 2>&1 || git init -b main) && (git config user.name >nul || git config user.name \"SEN-LeVi\") && (git config user.email >nul || git config user.email \"SEN-LeVi@users.noreply.github.com\") && git add -A && git commit -m \"Initial commit: Workvine professional network SaaS\" -m \"Next.js 16, Tailwind v4 + shadcn/ui, Better Auth, PostgreSQL with Prisma migrations and a Drizzle mirror, Zod, TanStack Query/Virtual, and an OpenRouter AI assistant limited to three free NVIDIA Nemotron models.\" -m \"Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\" -m \"Claude-Session: https://claude.ai/code/session_01TANDzCE6RkdCVGco34pxsd\" && git branch -M main && (git remote get-url origin >nul 2>&1 || git remote add origin https://github.com/SEN-LeVi/Saas-Cloud.git) && git push -u origin main && echo PUSH_OK) > .vscode\\git-push.log 2>&1 & type .vscode\\git-push.log",
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "clear": true
+      }
+    }
+  ]
+}

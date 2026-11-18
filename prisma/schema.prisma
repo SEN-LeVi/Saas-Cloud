@@ -1,0 +1,336 @@
+// Workvine — Prisma schema (source of truth for the database).
+// Run `npm run db:migrate` to create/update tables in PostgreSQL.
+// The Drizzle mirror lives in src/db/drizzle/schema.ts and must use the same
+// table and column names (snake_case via @map / @@map).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Auth (Better Auth) ─────────────────────────────
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Profile
+  handle      String   @unique
+  headline    String?
+  location    String?
+  about       String?
+  industry    String?
+  bannerColor String   @default("#a0b4b7") @map("banner_color")
+  openToWork  Boolean  @default(false) @map("open_to_work")
+  skills      String[] @default([])
+
+  sessions             Session[]
+  accounts             Account[]
+  experiences          Experience[]
+  educations           Education[]
+  posts                Post[]
+  comments             Comment[]
+  reactions            Reaction[]
+  sentConnections      Connection[]              @relation("requester")
+  receivedConnections  Connection[]              @relation("addressee")
+  savedJobs            SavedJob[]
+  applications         JobApplication[]
+  participants         ConversationParticipant[]
+  messages             Message[]
+  notifications        Notification[]            @relation("recipient")
+  actedNotifications   Notification[]            @relation("actor")
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// ───────────────────────────── Profile ─────────────────────────────
+
+model Experience {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  company     String
+  location    String?
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime? @map("end_date")
+  description String?
+
+  @@index([userId])
+  @@map("experiences")
+}
+
+model Education {
+  id        String  @id @default(cuid())
+  userId    String  @map("user_id")
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school    String
+  degree    String?
+  field     String?
+  startYear Int?    @map("start_year")
+  endYear   Int?    @map("end_year")
+
+  @@index([userId])
+  @@map("educations")
+}
+
+// ───────────────────────────── Feed ─────────────────────────────
+
+enum ReactionType {
+  LIKE
+  CELEBRATE
+  SUPPORT
+  LOVE
+  INSIGHTFUL
+  FUNNY
+
+  @@map("reaction_type")
+}
+
+model Post {
+  id        String     @id @default(cuid())
+  authorId  String     @map("author_id")
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  reactions Reaction[]
+  comments  Comment[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([authorId])
+  @@map("posts")
+}
+
+model Reaction {
+  id        String       @id @default(cuid())
+  postId    String       @map("post_id")
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String       @map("user_id")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      ReactionType @default(LIKE)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@unique([postId, userId])
+  @@map("reactions")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String   @map("post_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String   @map("author_id")
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([postId, createdAt])
+  @@map("comments")
+}
+
+// ───────────────────────────── Network ─────────────────────────────
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+
+  @@map("connection_status")
+}
+
+model Connection {
+  id          String           @id @default(cuid())
+  requesterId String           @map("requester_id")
+  requester   User             @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId String           @map("addressee_id")
+  addressee   User             @relation("addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status      ConnectionStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@map("connections")
+}
+
+// ───────────────────────────── Jobs ─────────────────────────────
+
+enum Workplace {
+  ON_SITE
+  HYBRID
+  REMOTE
+
+  @@map("workplace")
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+
+  @@map("employment_type")
+}
+
+model Job {
+  id           String           @id @default(cuid())
+  title        String
+  company      String
+  companyColor String           @default("#0a66c2") @map("company_color")
+  location     String
+  workplace    Workplace        @default(ON_SITE)
+  type         EmploymentType   @default(FULL_TIME)
+  salary       String?
+  description  String
+  applicants   Int              @default(0)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  saves        SavedJob[]
+  applications JobApplication[]
+
+  @@index([createdAt(sort: Desc)])
+  @@map("jobs")
+}
+
+model SavedJob {
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String   @map("job_id")
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([userId, jobId])
+  @@map("saved_jobs")
+}
+
+model JobApplication {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String   @map("job_id")
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, jobId])
+  @@map("job_applications")
+}
+
+// ───────────────────────────── Messaging ─────────────────────────────
+
+model Conversation {
+  id           String                    @id @default(cuid())
+  createdAt    DateTime                  @default(now()) @map("created_at")
+  updatedAt    DateTime                  @updatedAt @map("updated_at")
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([updatedAt(sort: Desc)])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId String       @map("conversation_id")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String       @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime     @default(now()) @map("last_read_at")
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String       @map("conversation_id")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String       @map("sender_id")
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+// ───────────────────────────── Notifications ─────────────────────────────
+
+enum NotificationType {
+  REACTION
+  COMMENT
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  MESSAGE
+  JOB
+
+  @@map("notification_type")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  user      User             @relation("recipient", fields: [userId], references: [id], onDelete: Cascade)
+  actorId   String?          @map("actor_id")
+  actor     User?            @relation("actor", fields: [actorId], references: [id], onDelete: SetNull)
+  type      NotificationType
+  text      String
+  href      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+}

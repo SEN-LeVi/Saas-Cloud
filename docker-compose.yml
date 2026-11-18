@@ -1,0 +1,18 @@
+# Optional: run PostgreSQL in Docker instead of installing it.
+#   docker compose up -d
+# Matches DATABASE_URL in .env (user postgres / password postgres / db saas_cloud / port 5432).
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: saas-cloud-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: saas_cloud
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

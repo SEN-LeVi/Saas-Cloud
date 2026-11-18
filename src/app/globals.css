@@ -1,0 +1,156 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Workvine design tokens — taken from the professional-network reference:
+ * system font stack, #0a66c2 action blue, warm #f4f2ee canvas, black-alpha text,
+ * pill buttons, 8px cards with a hairline ring.
+ */
+:root {
+  --radius: 0.5rem;
+
+  --background: #f4f2ee;
+  --foreground: rgb(0 0 0 / 0.9);
+  --card: #ffffff;
+  --card-foreground: rgb(0 0 0 / 0.9);
+  --popover: #ffffff;
+  --popover-foreground: rgb(0 0 0 / 0.9);
+  --primary: #0a66c2;
+  --primary-hover: #004182;
+  --primary-soft: #e8f1fb;
+  --primary-foreground: #ffffff;
+  --secondary: #eef3f8;
+  --secondary-foreground: rgb(0 0 0 / 0.9);
+  --muted: #f3f2ef;
+  --muted-foreground: rgb(0 0 0 / 0.6);
+  --subtle-foreground: rgb(0 0 0 / 0.75);
+  --accent: rgb(0 0 0 / 0.08);
+  --accent-foreground: rgb(0 0 0 / 0.9);
+  --destructive: #cc1016;
+  --success: #057642;
+  --rust: #b24020;
+  --sand: #eae6df;
+  --gold: #e7a33e;
+  --border: rgb(0 0 0 / 0.08);
+  --input: rgb(0 0 0 / 0.6);
+  --ring: #0a66c2;
+  --search: #edf3f8;
+  --badge: #cb112d;
+
+  --font-system: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Fira Sans",
+    Ubuntu, Oxygen, "Oxygen Sans", Cantarell, "Droid Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+@theme inline {
+  --font-sans: var(--font-system);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-rust: var(--rust);
+  --color-sand: var(--sand);
+  --color-gold: var(--gold);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-search: var(--search);
+  --color-badge: var(--badge);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-card: 0 0 0 1px rgb(0 0 0 / 0.08);
+  --shadow-raised: 0 0 0 1px rgb(0 0 0 / 0.08), 0 4px 12px rgb(0 0 0 / 0.12);
+  --shadow-float: 0 0 0 1px rgb(0 0 0 / 0.08), 0 8px 24px -4px rgb(0 0 0 / 0.2);
+
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  @keyframes shimmer {
+    0% { background-position: 150% 0; }
+    100% { background-position: -50% 0; }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background text-foreground font-sans text-sm leading-5 antialiased;
+  }
+  ::selection {
+    background: rgb(10 102 194 / 0.22);
+    color: inherit;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  input,
+  textarea {
+    caret-color: var(--primary);
+  }
+  a {
+    text-underline-offset: 2px;
+  }
+  /* Thin, palette-tinted scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(0 0 0 / 0.25) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: rgb(0 0 0 / 0.22);
+    border-radius: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* White content card with the reference's hairline ring */
+  .card-surface {
+    @apply rounded-lg bg-card shadow-card;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
